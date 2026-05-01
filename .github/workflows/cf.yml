@@ -1,0 +1,40 @@
+name: CF FAST 100
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */3 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # 1️⃣ 生成IP池
+    - name: Generate IP pool
+      run: python gen_ip.py
+
+    # 2️⃣ 扫描延迟
+    - name: Scan latency
+      run: |
+        pip install pandas
+        python scan.py
+
+    # 3️⃣ 选最快100
+    - name: Select top 100
+      run: python select_fast_100.py
+
+    # 4️⃣ 提交结果
+    - name: Commit
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+
+        git add fast_100.txt
+        git commit -m "update fast 100 IPs" || echo "no change"
+        git push
